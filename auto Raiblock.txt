@@ -1,0 +1,50 @@
+    internal class Program
+    {
+        private static void Main(string[] args)
+        {
+            Console.WriteLine("Hello World!");
+            GetAsync().Wait();
+        }
+
+        public static async System.Threading.Tasks.Task GetAsync()
+        {
+            using (var client = new NanoRpcClient("http://localhost:7076"))
+            {
+                var path = "D:\\file.txt";
+                var lines = File.ReadAllLines(path);
+                foreach (var line in lines)
+                {
+                    try
+                    {
+                        var accountBalance = await client.GetAccountBalanceAsync(new NanoAccount(line));
+                        Console.WriteLine($"{accountBalance.Balance.ToString(AmountBase.xrb)} xrb");
+                        if (accountBalance.Balance.ToString(AmountBase.xrb) != "0")
+                        {
+                            var nextBlock = await client.SendAsync(
+                                new NanoWallet("EB731135646D10F1E658DD338DD6E0C9073E98EE1432EFD334B83881143178A1"), // Wallet key
+                                new NanoAccount(line.ToString()), // Source Address
+                                new NanoAccount("xrb_3n915j7qwnuw1a7nk35jpfwgjhcrwafg3oc4wdj6yhjsx4ww6zzxp5ggtus4"), // Destination Address
+                                new NanoAmount(int.Parse(accountBalance.Balance.ToString(AmountBase.xrb)), AmountBase.xrb) // Amount to send
+                            );
+                            Console.WriteLine($"The next block hash is {nextBlock.Block}");
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                }
+                //var accountBalance = await client.GetAccountBalanceAsync(new NanoAccount("xrb_3zz9swew4om4k691461g7xzo38yns1bf5rfgjuiw46emisk11cow44bfrfsq"));
+                //Console.WriteLine($"The account balance is {accountBalance.Balance.ToString(AmountBase.xrb)} xrb");
+                //Console.WriteLine($"The account balance is {accountBalance.Balance.ToString(AmountBase.Nano)} Nano");
+
+                //var nextBlock = await client.SendAsync(
+                //    new NanoWallet("EB731135646D10F1E658DD338DD6E0C9073E98EE1432EFD334B83881143178A1"), // Wallet key
+                //    new NanoAccount("xrb_3zz9swew4om4k691461g7xzo38yns1bf5rfgjuiw46emisk11cow44bfrfsq"), // Source Address
+                //    new NanoAccount("xrb_3n915j7qwnuw1a7nk35jpfwgjhcrwafg3oc4wdj6yhjsx4ww6zzxp5ggtus4"), // Destination Address
+                //    new NanoAmount(65904, AmountBase.xrb) // Amount to send
+                //);
+                //Console.WriteLine($"The next block hash is {nextBlock.Block}");
+            }
+        }
+    }
